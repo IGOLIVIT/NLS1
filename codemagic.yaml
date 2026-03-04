@@ -10,13 +10,18 @@ definitions:
     automatic_ios_signing: &automatic_ios_signing
       groups:
         # Update the environment variables in the Codemagic UI below as required
-        # APPLE_ID
-        # APP_SPECIFIC_PASSWORD
-        # APP_STORE_CONNECT_ISSUER_ID
-        # APP_STORE_CONNECT_KEY_IDENTIFIER
-        # APP_STORE_CONNECT_PRIVATE_KEY
-        # APP_STORE_APP_ID
-        # CERTIFICATE_PRIVATE_KEY
+         ajdin29363@icloud.com
+         biqm-leaj-tpzk-dbma
+         7bf8adb9-e189-4106-9967-6b5547c70690
+         NVATS3ARDD
+         -----BEGIN PRIVATE KEY-----
+MIGTAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBHkwdwIBAQQglrVJAZ4nC0YDVJBK
+dcKiePd5HVsvFt/esHr6gKhkVj6gCgYIKoZIzj0DAQehRANCAATeEkstAUosDykd
+NIDF0cMRAXbIZlhNA4glv603VTuM80vEGtRbue6ue38ZS68oFkbNSGZpRpsrWtd9
+GgbufO5C
+-----END PRIVATE KEY-----
+         6759964881
+         CERTIFICATE_PRIVATE_KEY
       vars:
         BUNDLE_ID: "com.ajd.fghf76pjk1n"
         XCODE_WORKSPACE: "App.xcworspace"
