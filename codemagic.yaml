@@ -2,97 +2,69 @@ definitions:
   instance_mac_m2: &instance_mac_m2
     instance_type: mac_mini_m2
     max_build_duration: 120
+
   env_versions: &env_versions
-    flutter: stable
-    xcode: latest # <-- set to specific version e.g. 14.3, 15.0 to avoid unexpected updates.
+    xcode: latest
     cocoapods: default
-  environment:
-    automatic_ios_signing: &automatic_ios_signing
-      groups:
-        # Update the environment variables in the Codemagic UI below as required
-         APPLE_ID: ajdin29363@icloud.com
-         APP_SPECIFIC_PASSWORD: biqm-leaj-tpzk-dbma
-         APP_STORE_CONNECT_ISSUER_ID: 7bf8adb9-e189-4106-9967-6b5547c70690
-         APP_STORE_CONNECT_KEY_IDENTIFIER: NVATS3ARDD
-         APP_STORE_CONNECT_PRIVATE_KEY: -----BEGIN PRIVATE KEY-----
-MIGTAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBHkwdwIBAQQglrVJAZ4nC0YDVJBK
-dcKiePd5HVsvFt/esHr6gKhkVj6gCgYIKoZIzj0DAQehRANCAATeEkstAUosDykd
-NIDF0cMRAXbIZlhNA4glv603VTuM80vEGtRbue6ue38ZS68oFkbNSGZpRpsrWtd9
-GgbufO5C
------END PRIVATE KEY-----
-         APP_STORE_APP_ID: 6759964881
-        # CERTIFICATE_PRIVATE_KEY
-      vars:
-        BUNDLE_ID: "com.ajd.fghf76pjk1n"
-        XCODE_WORKSPACE: "App.xcworspace"
-        XCODE_SCHEME: "App"
-        XCODE_CONFIG: "Release-dev"
-  artifacts:
-    - &ipa build/ios/ipa/*.ipa
-    - &xcode_log /tmp/xcodebuild_logs/*.log
-    - &dsym $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
-    - &app $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.app
-  scripts:
-    - &ios_initialize_keychain
-      name: Set up keychain to be used for codesigning using Codemagic CLI 'keychain' command
-      script: |
-        keychain initialize
-    - &fetch_signing_files
-      name: Fetch signing files
-      script: |
-        app-store-connect fetch-signing-files "$BUNDLE_ID" --type IOS_APP_STORE --create
-    - &add_certs_to_keychain
-      name: Add certs to keychain
-      script: |
-        keychain add-certificates
-    - &use_profiles
-      name: Set up code signing settings on Xcode project
-      script: |
-        xcode-project use-profiles
-    - &increment_ios_build_number
-      name: Increment build number
-      script: |
-        #!/bin/sh
-        set -ex
-        cd $FCI_BUILD_DIR
-        # agvtool new-version -all $(($BUILD_NUMBER + 1))
-        agvtool new-version -all $(($(app-store-connect get-latest-testflight-build-number $APP_STORE_APP_ID) + 1))
-    - &build_ipa
-      name: Build ipa
-      script: |
-        # xcode-project build-ipa --workspace $XCODE_WORKSPACE --scheme $XCODE_SCHEME --config $XCODE_CONFIG
-        xcode-project build-ipa --workspace $XCODE_WORKSPACE --scheme $XCODE_SCHEME
-  email_release: &email_release
-    email:
-      recipients:
-        - user_1@example.com
-        - user_2@example.com
-      notify:
-        success: true
-        failure: true
-  email_develop: &email_develop
-    email:
-      recipients:
-        - user_3@example.com
-        - user_4@example.com
-        - user_5@example.com
-      notify:
-        success: true
-        failure: true
-  ios_app_store_publish: &ios_app_store_publish
-    app_store_connect:
-      apple_id: $APPLE_ID
-      password: $APP_SPECIFIC_PASSWORD
-  slack_publish: &slack_publish
-    slack:
-      channel: "#builds"
+
+  app_environment: &app_environment
+    groups:
+      - appstore_credentials
+    vars:
+      BUNDLE_ID: "com.ajd.fghf76pjk1n"
+      APP_STORE_APP_ID: "6759964881"
+      XCODE_WORKSPACE: "App.xcodeproj"
+      XCODE_SCHEME: "App"
+
+  artifacts: &artifacts
+    - build/ios/ipa/*.ipa
+    - /tmp/xcodebuild_logs/*.log
+    - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
+    - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.app
+
+  ios_initialize_keychain: &ios_initialize_keychain
+    name: Set up keychain
+    script: |
+      keychain initialize
+
+  fetch_signing_files: &fetch_signing_files
+    name: Fetch signing files
+    script: |
+      app-store-connect fetch-signing-files "$BUNDLE_ID" --type IOS_APP_STORE --create
+
+  add_certs_to_keychain: &add_certs_to_keychain
+    name: Add certificates to keychain
+    script: |
+      keychain add-certificates
+
+  use_profiles: &use_profiles
+    name: Apply provisioning profiles
+    script: |
+      xcode-project use-profiles
+
+  increment_ios_build_number: &increment_ios_build_number
+    name: Increment build number
+    script: |
+      #!/bin/sh
+      set -ex
+      cd "$FCI_BUILD_DIR"
+      LATEST_BUILD_NUMBER=$(app-store-connect get-latest-testflight-build-number "$APP_STORE_APP_ID" || echo 0)
+      agvtool new-version -all $(($LATEST_BUILD_NUMBER + 1))
+
+  build_ipa: &build_ipa
+    name: Build ipa
+    script: |
+      xcode-project build-ipa --project "App.xcodeproj" --scheme "$XCODE_SCHEME"
+
 workflows:
   ios-release:
     name: iOS release
     <<: *instance_mac_m2
+
     environment:
-      <<: *automatic_ios_signing
       <<: *env_versions
+      <<: *app_environment
+
     triggering:
       events:
         - tag
@@ -100,6 +72,7 @@ workflows:
         - pattern: "main"
           include: true
           source: true
+
     scripts:
       - *ios_initialize_keychain
       - *fetch_signing_files
@@ -107,18 +80,27 @@ workflows:
       - *use_profiles
       - *increment_ios_build_number
       - *build_ipa
+
     artifacts:
-      - *ipa
-      - *dsym
+      - build/ios/ipa/*.ipa
+      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
+      - /tmp/xcodebuild_logs/*.log
+
     publishing:
-      <<: *email_release
-      <<: *ios_app_store_publish
+      app_store_connect:
+        api_key: $APP_STORE_CONNECT_PRIVATE_KEY
+        key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
+        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
+        submit_to_testflight: true
+
   ios-staging:
-    name: iOS develop
+    name: iOS staging
     <<: *instance_mac_m2
+
     environment:
-      <<: *automatic_ios_signing
       <<: *env_versions
+      <<: *app_environment
+
     triggering:
       events:
         - push
@@ -126,6 +108,7 @@ workflows:
         - pattern: "develop"
           include: true
           source: true
+
     scripts:
       - *ios_initialize_keychain
       - *fetch_signing_files
@@ -133,9 +116,15 @@ workflows:
       - *use_profiles
       - *increment_ios_build_number
       - *build_ipa
+
     artifacts:
-      - *ipa
-      - *xcode_log
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
+
     publishing:
-      <<: *email_develop
-      <<: *slack_publish
+      app_store_connect:
+        api_key: $APP_STORE_CONNECT_PRIVATE_KEY
+        key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
+        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
+        submit_to_testflight: true
