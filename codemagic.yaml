@@ -13,14 +13,8 @@ definitions:
     vars:
       BUNDLE_ID: "com.ajd.fghf76pjk1n"
       APP_STORE_APP_ID: "6759964881"
-      XCODE_WORKSPACE: "App.xcodeproj"
+      XCODE_WORKSPACE: "App.xcworkspace"
       XCODE_SCHEME: "App"
-
-  artifacts: &artifacts
-    - build/ios/ipa/*.ipa
-    - /tmp/xcodebuild_logs/*.log
-    - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
-    - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.app
 
   ios_initialize_keychain: &ios_initialize_keychain
     name: Set up keychain
@@ -54,17 +48,15 @@ definitions:
   build_ipa: &build_ipa
     name: Build ipa
     script: |
-      xcode-project build-ipa --project "App.xcodeproj" --scheme "$XCODE_SCHEME"
+      xcode-project build-ipa --workspace "$XCODE_WORKSPACE" --scheme "$XCODE_SCHEME"
 
 workflows:
   ios-release:
     name: iOS release
     <<: *instance_mac_m2
-
     environment:
       <<: *env_versions
       <<: *app_environment
-
     triggering:
       events:
         - tag
@@ -72,7 +64,6 @@ workflows:
         - pattern: "main"
           include: true
           source: true
-
     scripts:
       - *ios_initialize_keychain
       - *fetch_signing_files
@@ -80,12 +71,11 @@ workflows:
       - *use_profiles
       - *increment_ios_build_number
       - *build_ipa
-
     artifacts:
       - build/ios/ipa/*.ipa
-      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
       - /tmp/xcodebuild_logs/*.log
-
+      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
+      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.app
     publishing:
       app_store_connect:
         api_key: $APP_STORE_CONNECT_PRIVATE_KEY
@@ -96,11 +86,9 @@ workflows:
   ios-staging:
     name: iOS staging
     <<: *instance_mac_m2
-
     environment:
       <<: *env_versions
       <<: *app_environment
-
     triggering:
       events:
         - push
@@ -108,7 +96,6 @@ workflows:
         - pattern: "develop"
           include: true
           source: true
-
     scripts:
       - *ios_initialize_keychain
       - *fetch_signing_files
@@ -116,12 +103,11 @@ workflows:
       - *use_profiles
       - *increment_ios_build_number
       - *build_ipa
-
     artifacts:
       - build/ios/ipa/*.ipa
       - /tmp/xcodebuild_logs/*.log
       - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
-
+      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.app
     publishing:
       app_store_connect:
         api_key: $APP_STORE_CONNECT_PRIVATE_KEY
