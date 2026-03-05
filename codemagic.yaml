@@ -17,12 +17,6 @@ definitions:
       XCODE_SCHEME: "App"
       XCODE_CONFIG: "Release-dev"
 
-  artifacts_all: &artifacts_all
-    - build/ios/ipa/*.ipa
-    - /tmp/xcodebuild_logs/*.log
-    - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
-    - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.app
-
   ios_initialize_keychain: &ios_initialize_keychain
     name: Set up keychain
     script: |
@@ -81,7 +75,10 @@ workflows:
       - *increment_ios_build_number
       - *build_ipa
     artifacts:
-      - *artifacts_all
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
+      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.app
     publishing:
       app_store_connect:
         api_key: $APP_STORE_CONNECT_PRIVATE_KEY
@@ -110,7 +107,10 @@ workflows:
       - *increment_ios_build_number
       - *build_ipa
     artifacts:
-      - *artifacts_all
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
+      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.app
     publishing:
       app_store_connect:
         api_key: $APP_STORE_CONNECT_PRIVATE_KEY
