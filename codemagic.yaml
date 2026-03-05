@@ -15,7 +15,6 @@ definitions:
       APP_STORE_APP_ID: "6759964881"
       XCODE_PROJECT: "NLS1.xcodeproj"
       XCODE_SCHEME: "App"
-      XCODE_CONFIG: "Release-dev"
 
   ios_initialize_keychain: &ios_initialize_keychain
     name: Set up keychain
@@ -51,7 +50,7 @@ definitions:
     script: |
       set -ex
       cd "$FCI_BUILD_DIR"
-      xcode-project build-ipa --project "$XCODE_PROJECT" --scheme "$XCODE_SCHEME" --config "$XCODE_CONFIG"
+      xcode-project build-ipa --project "$XCODE_PROJECT" --scheme "$XCODE_SCHEME"
 
 workflows:
   ios-release:
