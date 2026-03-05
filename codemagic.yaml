@@ -14,7 +14,7 @@ definitions:
       BUNDLE_ID: "com.ajd.fghf76pjk1n"
       APP_STORE_APP_ID: "6759964881"
       XCODE_PROJECT: "NLS1.xcodeproj"
-      XCODE_SCHEME: "App"
+      XCODE_SCHEME: "NLS1"
 
   ios_initialize_keychain: &ios_initialize_keychain
     name: Set up keychain
